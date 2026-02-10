@@ -1,31 +1,33 @@
 # app/core/database.py
+
 import os
 from dotenv import load_dotenv
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+import asyncpg
+import ssl
 
-load_dotenv()
+load_dotenv()  # Load environment variables from .env file
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set")
+    raise RuntimeError("DATABASE_URL environment variable is not set")
 
-# For sync SQLAlchemy (if you still need it)
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-)
+# SSL context required for Supabase on Vercel
+ssl_context = ssl.create_default_context()
+ssl_context.check_hostname = False
+ssl_context.verify_mode = ssl.CERT_NONE
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
+# Global reusable connection (serverless-safe)
+_db_conn: asyncpg.Connection | None = None
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
+async def get_db_connection() -> asyncpg.Connection:
+    global _db_conn
+
+    if _db_conn is None or _db_conn.is_closed():
+        _db_conn = await asyncpg.connect(
+            DATABASE_URL,
+            ssl=ssl_context,
+        )
+
+    return _db_conn
