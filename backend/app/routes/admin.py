@@ -3,7 +3,7 @@ import asyncpg
 from app.core.security import verify_password, create_access_token
 from app.core.database import DATABASE_URL  
 
-router = APIRouter()
+router = APIRouter(prefix="/admin", tags=["Admin"])
 
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
@@ -20,7 +20,7 @@ async def get_admin_by_username(username: str):
     finally:
         await conn.close()
 
-@router.post("/admin/login")
+@router.post("/login")
 async def admin_login(username: str, password: str):
     admin = await get_admin_by_username(username)
     
