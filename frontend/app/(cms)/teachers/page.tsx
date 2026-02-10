@@ -13,7 +13,7 @@ export default function TeachersPage() {
   const [teachers, setTeachers] = useState<Teacher[]>([])
 
   const fetchTeachers = async () => {
-    const res = await fetch("http://localhost:8000/users/teachers")
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/teachers`)
     const data = await res.json()
     setTeachers(data.teachers)
   }

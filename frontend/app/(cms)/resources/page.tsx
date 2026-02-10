@@ -21,7 +21,7 @@ export default function ResourcesPage() {
     setMounted(true)
     const fetchResources = async () => {
       try {
-        const res = await fetch("http://localhost:8000/users/resources")
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/resources`)
         const data = await res.json()
         setResources(data.resources || [])
       } catch (error) {
@@ -38,7 +38,7 @@ export default function ResourcesPage() {
   const handleDelete = async (resourceId: number) => {
     if (confirm("Are you sure you want to delete this resource?")) {
       try {
-        const res = await fetch(`http://localhost:8000/users/resources/${resourceId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/resources/${resourceId}`, {
           method: "DELETE"
         })
         if (res.ok) {

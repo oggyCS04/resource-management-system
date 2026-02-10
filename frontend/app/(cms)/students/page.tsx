@@ -16,7 +16,7 @@ export default function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([])
 
   const fetchStudents = async () => {
-    const res = await fetch("http://localhost:8000/users/students")
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/students`)
     const data = await res.json()
     setStudents(data.students)
   }
