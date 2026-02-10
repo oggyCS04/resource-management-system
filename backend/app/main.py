@@ -12,7 +12,7 @@ app.include_router(users.router)
 # CORS - Updated for production
 origins = [
     "http://localhost:3000",  # Local development
-    os.getenv("FRONTEND_URL", ""),  # Production frontend
+    "https://rms-dbms.vercel.app",  # Production frontend
     "https://*.vercel.app",  # All Vercel deployments
 ]
 
