@@ -1,33 +1,19 @@
-# app/core/database.py
-
 import os
 from dotenv import load_dotenv
-import asyncpg
-import ssl
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is not set")
+engine = create_engine(DATABASE_URL)
 
-# SSL context required for Supabase on Vercel
-ssl_context = ssl.create_default_context()
-ssl_context.check_hostname = False
-ssl_context.verify_mode = ssl.CERT_NONE
+# Test the connection
+try:
+    with engine.connect() as connection:
+        print("Connection successful!")
+except Exception as e:
+    print(f"Failed to connect: {e}")
 
-# Global reusable connection (serverless-safe)
-_db_conn: asyncpg.Connection | None = None
-
-
-async def get_db_connection() -> asyncpg.Connection:
-    global _db_conn
-
-    if _db_conn is None or _db_conn.is_closed():
-        _db_conn = await asyncpg.connect(
-            DATABASE_URL,
-            ssl=ssl_context,
-        )
-
-    return _db_conn
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

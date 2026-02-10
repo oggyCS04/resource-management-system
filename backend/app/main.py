@@ -1,19 +1,23 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-
+from sqlalchemy import text
+from app.core.database import SessionLocal
 from app.routes import admin, users
+import os
 
 app = FastAPI(title="Resource Management System API")
-
-# -------------------- ROUTERS --------------------
-app.include_router(admin.router)
+app.include_router(admin.router) 
 app.include_router(users.router)
 
-# -------------------- CORS --------------------
+# CORS - Updated for production
 origins = [
-    "http://localhost:3000",
-    "https://rms-dbms.vercel.app",
+    "http://localhost:3000",  # Local development
+    os.getenv("FRONTEND_URL", ""),  # Frontend URL from environment variable
+    "https://*.vercel.app",  # All Vercel deployments
 ]
+
+# Remove empty strings
+origins = [origin for origin in origins if origin]
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,16 +27,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -------------------- ROOT --------------------
 @app.get("/")
-async def root():
+def root():
     return {"message": "Resource Management System API is running"}
 
-# -------------------- HEALTH CHECK --------------------
 @app.get("/health")
-async def health_check():
+def health_check():
+    """Health check endpoint for monitoring"""
     return {
         "status": "healthy",
         "api": "Resource Management System",
         "version": "1.0"
     }
+
+# Uncomment for testing database connection
+# @app.get("/db-test")
+# def db_test():
+#     db = None
+#     try:
+#         db = SessionLocal()
+#         result = db.execute(text("SELECT 1"))
+#         return {"database": "connected", "status": "ok"}
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+#     finally:
+#         if db:
+#             db.close()
