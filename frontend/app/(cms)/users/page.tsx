@@ -37,7 +37,7 @@ export default function UsersPage() {
 
   const handleDelete = (userId: number) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      fetch(`http://localhost:8000/users/${userId}`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
         method: "DELETE",
       })
         .then((res) => res.json())
