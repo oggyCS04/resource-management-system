@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
         "./backend/app"
-    ]
+    ],
+    "css.lint.unknownAtRules": "ignore"
 }

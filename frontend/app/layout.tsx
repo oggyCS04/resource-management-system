@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-
 export const metadata: Metadata = {
-  title: "Resource Management System",
-  description: "Manage your resources efficiently",
+  title: "College RMS — Resource Management System",
+  description: "Manage your college resources efficiently",
 };
 
 export default function RootLayout({
@@ -13,9 +13,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
+        </ThemeProvider>
       </body>
     </html>
   );

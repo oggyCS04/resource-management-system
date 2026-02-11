@@ -26,50 +26,61 @@ export default function DepartmentsPage() {
         setIsLoading(false)
       }
     }
-
     fetchDepartments()
   }, [])
 
-  if (isLoading) return <div className="p-6">Loading...</div>
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-700">Departments</h1>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Departments</h1>
+        <p className="text-sm text-muted-foreground mt-1">{departments.length} departments</p>
       </div>
 
-      <div className="bg-white rounded shadow overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-indigo-600">
-            <tr>
-              <th className="p-4 text-left w-1/5">Department ID</th>
-              <th className="p-4 text-left w-1/5">Name</th>
-              <th className="p-4 text-center w-1/5">Total Classes</th>
-              <th className="p-4 text-center w-1/5">Total Teachers</th>
-              <th className="p-4 text-center w-1/5">Total Students</th>
-            </tr>
-          </thead>
-          <tbody>
-            {departments.length > 0 ? (
-              departments.map((d) => (
-                <tr key={d.department_id} className="border-t hover:bg-gray-50">
-                  <td className="p-4 w-1/5">{d.department_id}</td>
-                  <td className="p-4 w-1/5">{d.name}</td>
-                  <td className="p-4 text-center w-1/5">{d.total_classes}</td>
-                  <td className="p-4 text-center w-1/5">{d.total_teachers}</td>
-                  <td className="p-4 text-center w-1/5">{d.total_students}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
-                  No departments found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => <div key={i} className="h-40 skeleton rounded-xl" />)}
+        </div>
+      ) : departments.length > 0 ? (
+        /* Card grid for departments — works great on all screen sizes */
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {departments.map((d) => (
+            <div
+              key={d.department_id}
+              className="bg-card border border-border rounded-xl p-5 hover:shadow-md hover:border-primary/20 transition-all group"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                    {d.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">ID: {d.department_id}</p>
+                </div>
+                <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-lg">
+                  🏛️
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-2.5 bg-muted/50 rounded-lg">
+                  <p className="text-lg font-bold text-foreground">{d.total_classes}</p>
+                  <p className="text-[11px] text-muted-foreground">Classes</p>
+                </div>
+                <div className="text-center p-2.5 bg-muted/50 rounded-lg">
+                  <p className="text-lg font-bold text-foreground">{d.total_teachers}</p>
+                  <p className="text-[11px] text-muted-foreground">Teachers</p>
+                </div>
+                <div className="text-center p-2.5 bg-muted/50 rounded-lg">
+                  <p className="text-lg font-bold text-foreground">{d.total_students}</p>
+                  <p className="text-[11px] text-muted-foreground">Students</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16 bg-card border border-border rounded-xl">
+          <p className="text-muted-foreground text-sm">No departments found</p>
+        </div>
+      )}
     </div>
   )
 }

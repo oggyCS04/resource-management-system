@@ -15,10 +15,8 @@ export default function ResourcesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [filterType, setFilterType] = useState("All Types")
   const [searchQuery, setSearchQuery] = useState("")
-  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setMounted(true)
     const fetchResources = async () => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/resources`)
@@ -31,7 +29,6 @@ export default function ResourcesPage() {
         setIsLoading(false)
       }
     }
-
     fetchResources()
   }, [])
 
@@ -56,89 +53,111 @@ export default function ResourcesPage() {
   const filteredResources = resources.filter(r => {
     const matchesType = filterType === "All Types" || r.type === filterType
     const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         r.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())
+      r.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesType && matchesSearch
   })
 
   const resourceTypes = ["All Types", ...new Set(resources.map(r => r.type))]
 
-  if (isLoading || !mounted) return <div className="p-6">Loading...</div>
-
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-700">Resources</h1>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
-          + Add Resource
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Resources</h1>
+          <p className="text-sm text-muted-foreground mt-1">{resources.length} total resources</p>
+        </div>
+        <button className="inline-flex items-center justify-center h-10 px-4 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity shadow-sm shadow-primary/20">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><path d="M12 5v14M5 12h14" /></svg>
+          Add Resource
         </button>
       </div>
 
-      <div className="bg-white rounded shadow p-6 mb-6">
-        <div className="flex gap-4 mb-4">
-          <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded bg-white text-gray-700 cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {resourceTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-
-          <select className="px-4 py-2 border border-gray-300 rounded bg-white text-gray-700 cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-            <option>All Uploaders</option>
-            {[...new Set(resources.map(r => r.uploaded_by))].map(uploader => (
-              <option key={uploader} value={uploader}>{uploader}</option>
-            ))}
-          </select>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1 sm:max-w-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search resources..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-10 pl-10 pr-4 border border-input rounded-xl bg-background text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+          />
         </div>
-
-        <input
-          type="text"
-          placeholder="Search resources..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded mb-4"
-        />
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="h-10 px-4 border border-input rounded-xl bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+        >
+          {resourceTypes.map(type => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
       </div>
 
-      <div className="bg-white rounded shadow overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-indigo-600">
-            <tr>
-              <th className="p-4 text-left w-1/6">Resource ID</th>
-              <th className="p-4 text-left w-1/4">Title</th>
-              <th className="p-4 text-left w-1/6">Type</th>
-              <th className="p-4 text-left w-1/6">Uploaded By</th>
-              <th className="p-4 text-left w-1/6">Date Uploaded</th>
+      {isLoading ? (
+        <div className="space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="h-16 skeleton rounded-xl" />)}</div>
+      ) : (
+        <>
+          {/* Desktop */}
+          <div className="hidden md:block bg-card border border-border rounded-xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">ID</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Uploaded By</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredResources.map((r) => (
+                    <tr key={r.resource_id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-5 py-3.5 text-sm text-foreground font-medium">{r.resource_id}</td>
+                      <td className="px-5 py-3.5 text-sm text-foreground font-medium">{r.title}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
+                          {r.type}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-sm text-muted-foreground">{r.uploaded_by}</td>
+                      <td className="px-5 py-3.5 text-sm text-muted-foreground">{r.date_uploaded}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-            </tr>
-          </thead>
-          <tbody>
-            {filteredResources.length > 0 ? (
-              filteredResources.map((r) => (
-                <tr key={r.resource_id} className="border-t hover:bg-gray-50">
-                  <td className="p-4 w-1/6">{r.resource_id}</td>
-                  <td className="p-4 w-1/4">{r.title}</td>
-                  <td className="p-4 w-1/6">
-                    <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs">
-                      {r.type}
-                    </span>
-                  </td>
-                  <td className="p-4 w-1/6">{r.uploaded_by}</td>
-                  <td className="p-4 w-1/6">{r.date_uploaded}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
-                  No resources found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-3">
+            {filteredResources.map((r) => (
+              <div key={r.resource_id} className="bg-card border border-border rounded-xl p-4 space-y-2">
+                <div className="flex items-start justify-between">
+                  <p className="font-semibold text-foreground">{r.title}</p>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
+                    {r.type}
+                  </span>
+                </div>
+                <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border">
+                  <span>By: <strong className="text-foreground">{r.uploaded_by}</strong></span>
+                  <span>{r.date_uploaded}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {filteredResources.length === 0 && (
+            <div className="text-center py-16 bg-card border border-border rounded-xl">
+              <p className="text-muted-foreground text-sm">No resources found</p>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
