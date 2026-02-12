@@ -59,7 +59,7 @@ export default function AdminLogin() {
         <ThemeToggle />
       </div>
 
-      <div className="relative w-full max-w-[420px] mx-4 sm:mx-auto">
+      <div className="relative w-full max-w-105 mx-4 sm:mx-auto">
         {/* Brand */}
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl bg-primary mx-auto mb-5 flex items-center justify-center shadow-lg shadow-primary/20">
@@ -76,11 +76,11 @@ export default function AdminLogin() {
         {/* Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-card border border-border rounded-2xl shadow-xl shadow-black/[0.03] dark:shadow-black/20 p-6 sm:p-8 space-y-5"
+          className="bg-card border border-border rounded-2xl shadow-xl shadow-black/3 dark:shadow-black/20 p-6 sm:p-8 space-y-5"
         >
           {error && (
             <div className="flex items-center gap-2.5 p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm animate-slide-up">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                 <circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" />
               </svg>
               {error}

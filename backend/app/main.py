@@ -2,12 +2,16 @@ from fastapi import FastAPI, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.core.database import SessionLocal
-from app.routes import admin, users
+from app.routes import admin, users, department, resource, file
 import os
+
 
 app = FastAPI(title="Resource Management System API")
 app.include_router(admin.router) 
 app.include_router(users.router)
+app.include_router(department.router)
+app.include_router(resource.router)
+app.include_router(file.router)
 
 # CORS - Updated for production
 origins = [

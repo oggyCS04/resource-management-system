@@ -39,7 +39,7 @@ const Button: React.FC<ButtonProps> = ({
             disabled={disabled}
             className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]}`}
         >
-            {icon && <span className="flex-shrink-0">{icon}</span>}
+            {icon && <span className="shrink-0">{icon}</span>}
             {label}
         </button>
     );

@@ -16,7 +16,7 @@ export default function DepartmentsPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/departments`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/departments/`)
         const data = await res.json()
         setDepartments(data.departments || [])
       } catch (error) {

@@ -3,8 +3,10 @@ import { useEffect, useState } from "react"
 
 type Resource = {
   resource_id: number
-  title: string
+  file_id: number
+  description: string
   type: string
+  uploaded_at: string
   uploaded_by: string
   date_uploaded: string
   target_count: number
@@ -19,7 +21,7 @@ export default function ResourcesPage() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/resources`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resources/`)
         const data = await res.json()
         setResources(data.resources || [])
       } catch (error) {
@@ -35,7 +37,7 @@ export default function ResourcesPage() {
   const handleDelete = async (resourceId: number) => {
     if (confirm("Are you sure you want to delete this resource?")) {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/resources/${resourceId}`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resources/${resourceId}`, {
           method: "DELETE"
         })
         if (res.ok) {
@@ -52,7 +54,7 @@ export default function ResourcesPage() {
 
   const filteredResources = resources.filter(r => {
     const matchesType = filterType === "All Types" || r.type === filterType
-    const matchesSearch = r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch = r.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())
     return matchesType && matchesSearch
   })
@@ -66,10 +68,10 @@ export default function ResourcesPage() {
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Resources</h1>
           <p className="text-sm text-muted-foreground mt-1">{resources.length} total resources</p>
         </div>
-        <button className="inline-flex items-center justify-center h-10 px-4 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity shadow-sm shadow-primary/20">
+        {/* <button className="inline-flex items-center justify-center h-10 px-4 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:opacity-90 transition-opacity shadow-sm shadow-primary/20">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2"><path d="M12 5v14M5 12h14" /></svg>
           Add Resource
-        </button>
+        </button> */}
       </div>
 
       {/* Filters */}
@@ -108,8 +110,10 @@ export default function ResourcesPage() {
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
                     <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">ID</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">File ID</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Uploaded At</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Uploaded By</th>
                     <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
                   </tr>
@@ -118,12 +122,14 @@ export default function ResourcesPage() {
                   {filteredResources.map((r) => (
                     <tr key={r.resource_id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-5 py-3.5 text-sm text-foreground font-medium">{r.resource_id}</td>
-                      <td className="px-5 py-3.5 text-sm text-foreground font-medium">{r.title}</td>
+                      <td className="px-5 py-3.5 text-sm text-foreground font-medium">{r.file_id}</td>
+                      <td className="px-5 py-3.5 text-sm text-foreground font-medium">{r.description}</td>
                       <td className="px-5 py-3.5">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
                           {r.type}
                         </span>
                       </td>
+                      <td className="px-5 py-3.5 text-sm text-muted-foreground">{r.uploaded_at}</td>
                       <td className="px-5 py-3.5 text-sm text-muted-foreground">{r.uploaded_by}</td>
                       <td className="px-5 py-3.5 text-sm text-muted-foreground">{r.date_uploaded}</td>
                     </tr>
@@ -138,12 +144,13 @@ export default function ResourcesPage() {
             {filteredResources.map((r) => (
               <div key={r.resource_id} className="bg-card border border-border rounded-xl p-4 space-y-2">
                 <div className="flex items-start justify-between">
-                  <p className="font-semibold text-foreground">{r.title}</p>
+                  <p className="font-semibold text-foreground">{r.description}</p>
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300">
                     {r.type}
                   </span>
                 </div>
                 <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border">
+                  
                   <span>By: <strong className="text-foreground">{r.uploaded_by}</strong></span>
                   <span>{r.date_uploaded}</span>
                 </div>
