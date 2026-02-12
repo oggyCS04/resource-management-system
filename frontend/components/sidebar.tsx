@@ -112,7 +112,6 @@ export default function Sidebar() {
               <p className="text-[11px] text-muted-foreground mt-0.5">Admin Panel</p>
             </div>
           </div>
-          <ThemeToggle />
         </div>
       </div>
 
@@ -186,7 +185,7 @@ export default function Sidebar() {
         {/* Close button */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
           aria-label="Close menu"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

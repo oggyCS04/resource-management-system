@@ -54,11 +54,6 @@ export default function AdminLogin() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
-      {/* Theme toggle */}
-      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
-        <ThemeToggle />
-      </div>
-
       <div className="relative w-full max-w-105 mx-4 sm:mx-auto">
         {/* Brand */}
         <div className="text-center mb-8">
