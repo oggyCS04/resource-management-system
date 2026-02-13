@@ -17,7 +17,7 @@ const Button: React.FC<ButtonProps> = ({
     disabled = false,
     icon,
 }) => {
-    const baseClasses = "inline-flex items-center justify-center font-medium rounded-xl transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap";
+    const baseClasses = "inline-flex items-center justify-center font-medium rounded-lg transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap";
 
     const sizeClasses = {
         sm: "h-8 px-3 text-xs gap-1.5",
@@ -26,9 +26,9 @@ const Button: React.FC<ButtonProps> = ({
     };
 
     const variantClasses = {
-        primary: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm shadow-primary/20",
+        primary: "bg-primary text-primary-foreground hover:opacity-90 shadow-sm",
         secondary: "bg-muted text-foreground hover:bg-accent",
-        destructive: "bg-destructive text-destructive-foreground hover:opacity-90 shadow-sm shadow-destructive/20",
+        destructive: "bg-destructive text-destructive-foreground hover:opacity-90",
         ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
         outline: "border border-border bg-card text-foreground hover:bg-muted",
     };

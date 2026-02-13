@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -14,7 +13,7 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (document.cookie.includes('token=')) {
-      router.replace('/');
+      router.replace('/admin');
     }
   }, [router]);
 

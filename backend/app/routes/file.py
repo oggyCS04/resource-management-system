@@ -31,9 +31,10 @@ async def upload_file(file: UploadFile = File(...)):
         )
 
         # 4️⃣ Store ONLY file path in database
-        await conn.execute("""
+        row = await conn.fetchrow("""
             INSERT INTO rms.file (file_name, file_path, file_type, uploaded_at)
             VALUES ($1, $2, $3, $4)
+            RETURNING file_id
         """,
             file.filename,
             unique_filename,  # store only path
@@ -42,7 +43,8 @@ async def upload_file(file: UploadFile = File(...)):
         )
 
         return {
-            "message": "File uploaded successfully"
+            "message": "File uploaded successfully",
+            "file_id": row["file_id"]
         }
 
     except Exception as e:

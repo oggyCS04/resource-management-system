@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from app.core.database import SessionLocal
-from app.routes import admin, users, department, resource, file
+from app.routes import admin, users, department, resource, file, teacher
 import os
 
 
@@ -12,6 +12,7 @@ app.include_router(users.router)
 app.include_router(department.router)
 app.include_router(resource.router)
 app.include_router(file.router)
+app.include_router(teacher.router)
 
 # CORS - Updated for production
 origins = [
