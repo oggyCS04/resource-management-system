@@ -44,10 +44,10 @@ async def get_all_resources():
                 r.file_id,
                 r.description,
                 f.file_type AS type,
-                rt.target_id AS uploaded_at,
+                rt.class_id AS uploaded_at,
                 r.uploaded_by,
                 r.date_uploaded,
-                COUNT(rt.target_id) AS target_count
+                COUNT(rt.id) AS target_count
                 FROM rms.resource r
                 LEFT JOIN rms.resourcetarget rt
                 ON r.resource_id = rt.resource_id
@@ -58,7 +58,7 @@ async def get_all_resources():
                 r.file_id,
                 r.description,
                 f.file_type,
-                rt.target_id,
+                rt.class_id,
                 r.uploaded_by,
                 r.date_uploaded
                 ORDER BY

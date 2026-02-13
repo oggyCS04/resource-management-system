@@ -20,7 +20,7 @@ export default function FilesPage() {
 
     const fetchFiles = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/`)
             const data = await res.json()
             setFiles(data.files || [])
         } catch (error) {
