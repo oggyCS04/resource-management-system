@@ -13,6 +13,53 @@ async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
 
 
+
+
+# ---------- DASHBOARD STATS (using JOINs) ----------
+@router.get("/dashboard-stats")
+async def get_dashboard_stats():
+    conn = await get_db_connection()
+    try:
+        row = await conn.fetchrow("""
+            SELECT
+                s.total_students,
+                t.total_teachers,
+                d.total_departments,
+                c.total_classes,
+                r.total_resources
+            FROM
+                (SELECT COUNT(*) AS total_students
+                 FROM rms.students st
+                 JOIN rms.users u ON st.user_id = u.id
+                 WHERE u.is_active = true) s,
+
+                (SELECT COUNT(*) AS total_teachers
+                 FROM rms.teachers tc
+                 JOIN rms.users u ON tc.user_id = u.id
+                 WHERE u.is_active = true) t,
+
+                (SELECT COUNT(*) AS total_departments
+                 FROM rms.department) d,
+
+                (SELECT COUNT(*) AS total_classes
+                 FROM rms.class) c,
+
+                (SELECT COUNT(*) AS total_resources
+                 FROM rms.resource) r
+        """)
+
+        return {
+            "total_students": row["total_students"],
+            "total_teachers": row["total_teachers"],
+            "total_departments": row["total_departments"],
+            "total_classes": row["total_classes"],
+            "total_resources": row["total_resources"]
+        }
+
+    finally:
+        await conn.close()
+
+
 # ---------- FETCH ALL USERS ----------
 @router.get("/")
 async def get_all_users():

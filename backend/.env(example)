@@ -1,0 +1,11 @@
+
+cd backend/.env
+DATABASE_URL=your_database_url
+FRONTEND_URL=http://localhost:3000
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+
+
+cd frontend/.env.local
+# Backend API URL
+NEXT_PUBLIC_API_URL=http://localhost:8000
