@@ -1,122 +1,116 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
-export default function AddTeacherModal({ open, onClose, onSuccess }: any) {
+export default function AddTeacherModal({ open, onClose, onSuccess, initialData }: any) {
   const [form, setForm] = useState({
-    full_name: "",
-    email: "",
+    full_name: initialData?.full_name || "",
+    email: initialData?.email || "",
     password: "",
     role_id: 1,
-    is_active: true,
-    department_id: 1,
+    is_active: initialData?.is_active ?? true,
+    department_id: initialData?.department_id || 1,
   })
-  const [isLoading, setIsLoading] = useState(false)
 
   if (!open) return null
 
   const submit = async () => {
-    setIsLoading(true)
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      })
-      onSuccess()
-      onClose()
-    } catch (err) {
-      console.error("Failed to add teacher:", err)
-    } finally {
-      setIsLoading(false)
-    }
+    console.log(JSON.stringify(form))
+    const url = initialData
+      ? `${process.env.NEXT_PUBLIC_API_URL}/users/${initialData.id}`
+      : `${process.env.NEXT_PUBLIC_API_URL}/users`
+
+    const method = initialData ? "PATCH" : "POST"
+
+    await fetch(url, {
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(form),
+    })
+
+    onSuccess()
+    onClose()
   }
 
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 animate-fade-in" onClick={onClose}>
-      <div
-        className="bg-card w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl border border-border shadow-2xl animate-slide-up max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-border flex items-center justify-between sticky top-0 bg-card z-10 rounded-t-2xl">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Add New Teacher</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">Enter teacher details below</p>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-          </button>
-        </div>
 
-        {/* Form */}
-        <div className="px-6 py-5 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Full Name</label>
-            <input
-              className="w-full h-10 px-4 border border-input rounded-xl bg-background text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              placeholder="John Doe"
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Email</label>
-            <input
-              className="w-full h-10 px-4 border border-input rounded-xl bg-background text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              placeholder="john.doe@example.com"
-              type="email"
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
-            <input
-              className="w-full h-10 px-4 border border-input rounded-xl bg-background text-sm text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              placeholder="••••••••"
-              type="password"
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-1.5">Department</label>
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+      <div className="bg-white w-105 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-indigo-600 mb-4">
+          {initialData ? "Edit Teacher" : "Add New Teacher"}
+        </h2>
+
+        <div className="space-y-3">
+          <input
+            className="w-full border rounded px-3 py-2"
+            placeholder="Full Name"
+            value={form.full_name}
+            onChange={(e) =>
+              setForm({ ...form, full_name: e.target.value })
+            }
+          />
+
+          <input
+            className="w-full border rounded px-3 py-2"
+            placeholder="Email"
+            type="email"
+            value={form.email}
+            onChange={(e) =>
+              setForm({ ...form, email: e.target.value })
+            }
+          />
+
+          <input
+            className="w-full border rounded px-3 py-2"
+            placeholder={initialData ? "Password (leave blank to keep current)" : "Password"}
+            type="password"
+            value={form.password}
+            onChange={(e) =>
+              setForm({ ...form, password: e.target.value })
+            }
+          />
+          <label className="mb-4">Department
             <select
-              className="w-full h-10 px-4 border border-input rounded-xl bg-background text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-              onChange={(e) => setForm({ ...form, department_id: Number(e.target.value) })}
+              className="w-full border rounded px-3 py-2"
+              value={form.department_id}
+              onChange={(e) =>
+                setForm({ ...form, department_id: Number(e.target.value) })
+              }
             >
               <option value={1}>Electronics and Computer Engineering</option>
               <option value={2}>Architecture</option>
               <option value={3}>Applied Science</option>
-              <option value={4}>Automobile and Mechanical Engineering</option>
+              <option value={4}>utomobile and Mechanical Engineering</option>
               <option value={5}>Civil Engineering</option>
               <option value={6}>Industrial Engineering</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2.5 pt-1">
+            </select></label>
+
+          <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
-              id="active-teacher"
               checked={form.is_active}
-              className="w-4 h-4 rounded border-border cursor-pointer accent-primary"
-              onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              onChange={(e) =>
+                setForm({ ...form, is_active: e.target.checked })
+              }
             />
-            <label htmlFor="active-teacher" className="text-sm font-medium text-foreground cursor-pointer">Active</label>
-          </div>
+            Active
+          </label>
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 bg-muted/30 border-t border-border flex justify-end gap-2.5 rounded-b-2xl sticky bottom-0">
+        <div className="flex justify-end gap-3 mt-6">
           <button
             onClick={onClose}
-            className="h-10 px-4 text-sm font-medium text-foreground bg-card border border-border rounded-xl hover:bg-muted transition-colors"
+            className="px-4 py-2 border rounded"
           >
             Cancel
           </button>
           <button
             onClick={submit}
-            disabled={isLoading}
-            className="h-10 px-5 text-sm font-medium text-primary-foreground bg-primary rounded-xl hover:opacity-90 transition-opacity shadow-sm shadow-primary/20 disabled:opacity-50"
+            className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
           >
-            {isLoading ? "Adding..." : "Add Teacher"}
+            Save
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 import asyncpg
 import bcrypt
 from app.core.database import DATABASE_URL
+from app.schemas.user import UserCreate, UserUpdate
 from app.schemas.user import UserCreate
 
 
@@ -224,3 +225,125 @@ async def get_all_teachers():
     finally:
         await conn.close()
 
+
+
+
+# ---------- GET SINGLE USER ----------
+@router.get("/{user_id}")
+async def get_user(user_id: int):
+    conn = await get_db_connection()
+    try:
+        # First check if user exists and get basic info
+        user = await conn.fetchrow("SELECT * FROM rms.users WHERE id = $1", user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user_data = {
+            "id": user["id"],
+            "full_name": user["full_name"],
+            "email": user["email"],
+            "role_id": user["role_id"],
+            "is_active": user["is_active"]
+        }
+
+        # If student, get student details
+        if user["role_id"] == 2:
+            student = await conn.fetchrow("SELECT * FROM rms.students WHERE user_id = $1", user_id)
+            if student:
+                user_data["class_id"] = student["class_id"]
+                user_data["campus_rollno"] = student["campus_rollno"]
+
+        # If teacher, get teacher details
+        elif user["role_id"] == 1:
+            teacher = await conn.fetchrow("SELECT * FROM rms.teachers WHERE user_id = $1", user_id)
+            if teacher:
+                user_data["department_id"] = teacher["department_id"]
+
+        return user_data
+
+    finally:
+        await conn.close()
+
+
+# ---------- UPDATE USER ----------
+@router.patch("/{user_id}")
+async def update_user(user_id: int, user_update: UserUpdate):
+    conn = await get_db_connection()
+    try:
+        async with conn.transaction():
+            # 1. Update basic user info
+            update_query = "UPDATE rms.users SET "
+            update_params = []
+            param_idx = 1
+            updates = []
+
+            if user_update.full_name is not None:
+                updates.append(f"full_name = ${param_idx}")
+                update_params.append(user_update.full_name)
+                param_idx += 1
+            
+            if user_update.email is not None:
+                updates.append(f"email = ${param_idx}")
+                update_params.append(user_update.email)
+                param_idx += 1
+            
+            if user_update.is_active is not None:
+                updates.append(f"is_active = ${param_idx}")
+                update_params.append(user_update.is_active)
+                param_idx += 1
+
+            if user_update.password:
+                hashed_password = bcrypt.hashpw(
+                    user_update.password.encode("utf-8"),
+                    bcrypt.gensalt()
+                ).decode("utf-8")
+                updates.append(f"password = ${param_idx}")
+                update_params.append(hashed_password)
+                param_idx += 1
+
+            if updates:
+                update_query += ", ".join(updates) + f" WHERE id = ${param_idx}"
+                update_params.append(user_id)
+                await conn.execute(update_query, *update_params)
+
+            # 2. Get user role to update specific tables
+            role_row = await conn.fetchrow("SELECT role_id FROM rms.users WHERE id = $1", user_id)
+            if not role_row:
+                raise HTTPException(status_code=404, detail="User not found")
+            
+            role_id = role_row["role_id"]
+
+            # Update Student details
+            if role_id == 2:
+                student_updates = []
+                student_params = []
+                s_idx = 1
+
+                if user_update.class_id is not None:
+                    student_updates.append(f"class_id = ${s_idx}")
+                    student_params.append(user_update.class_id)
+                    s_idx += 1
+                
+                if user_update.campus_rollno is not None:
+                    student_updates.append(f"campus_rollno = ${s_idx}")
+                    student_params.append(user_update.campus_rollno)
+                    s_idx += 1
+                
+                if student_updates:
+                    s_query = "UPDATE rms.students SET " + ", ".join(student_updates) + f" WHERE user_id = ${s_idx}"
+                    student_params.append(user_id)
+                    await conn.execute(s_query, *student_params)
+
+            # Update Teacher details
+            elif role_id == 1:
+                if user_update.department_id is not None:
+                    await conn.execute(
+                        "UPDATE rms.teachers SET department_id = $1 WHERE user_id = $2",
+                        user_update.department_id,
+                        user_id
+                    )
+
+        return {"message": "User updated successfully"}
+
+    finally:
+        await conn.close()
