@@ -1,6 +1,6 @@
 "use client"
 
-import { useState} from "react"
+import { useState } from "react"
 
 export default function AddTeacherModal({ open, onClose, onSuccess, initialData }: any) {
   const [isLoading, setIsLoading] = useState(false)
@@ -28,6 +28,7 @@ export default function AddTeacherModal({ open, onClose, onSuccess, initialData 
         method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
+        credentials: 'include'
       })
       onSuccess()
       onClose()

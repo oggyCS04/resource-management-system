@@ -1,5 +1,5 @@
 "use client";
-import {useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import UploadFiles from "./uploadFiles"
 
 type File = {
@@ -20,7 +20,7 @@ export default function FilesPage() {
 
     const fetchFiles = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/`)
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/`, { credentials: 'include' })
             const data = await res.json()
             setFiles(data.files || [])
         } catch (error) {
@@ -52,6 +52,7 @@ export default function FilesPage() {
         if (confirm("Are you sure you want to delete this file?")) {
             fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/${fileId}`, {
                 method: "DELETE",
+                credentials: 'include'
             })
                 .then((res) => res.json())
                 .then(() => fetchFiles())
@@ -172,7 +173,7 @@ export default function FilesPage() {
                     )}
                 </>
             )}
-            
+
             <UploadFiles open={openUpload} onClose={() => setOpenUpload(false)} onSuccess={fetchFiles} />
         </div>
     )

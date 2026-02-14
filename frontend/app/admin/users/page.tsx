@@ -21,7 +21,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/`, { credentials: 'include' })
       const data = await res.json()
       setUsers(data.users)
     } catch (err) {
@@ -42,7 +42,7 @@ export default function UsersPage() {
 
   const handleEdit = async (user: User) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, { credentials: 'include' })
       if (!res.ok) throw new Error("Failed to fetch user details")
       const detailedUser = await res.json()
 
@@ -218,7 +218,8 @@ export default function UsersPage() {
       <AddTeacherModal
         key={selectedUser ? `edit-teacher-${selectedUser.id}` : 'add-teacher'}
         open={openTeacher}
-        onClose={() => {setOpenTeacher(false) 
+        onClose={() => {
+          setOpenTeacher(false)
           setSelectedUser(null)
         }}
         onSuccess={fetchUsers}
@@ -228,7 +229,8 @@ export default function UsersPage() {
       <AddStudentModal
         key={selectedUser ? `edit-student-${selectedUser.id}` : 'add-student'}
         open={openStudent}
-        onClose={() => {setOpenStudent(false)
+        onClose={() => {
+          setOpenStudent(false)
           setSelectedUser(null)
         }}
         onSuccess={fetchUsers}

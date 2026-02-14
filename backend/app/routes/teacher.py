@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Annotated
 import asyncpg
 from app.core.database import DATABASE_URL
+from app.core.security import get_current_teacher
 
 router = APIRouter(prefix="/teacher", tags=["Teacher"])
 
@@ -36,9 +37,16 @@ class ResourceLink(BaseModel):
 # or maybe allow filtering by teacher_id if provided as a query param. 
 # For simplicity and "no login", I'll just list all classes joined with department info.
 @router.get("/classes")
-async def get_teacher_classes():
+async def get_teacher_classes(current_user: Annotated[dict, Depends(get_current_teacher)]):
     conn = await get_db_connection()
     try:
+        # Get teacher_id from user_id
+        teacher = await conn.fetchrow("SELECT teacher_id FROM rms.teachers WHERE user_id = $1", current_user["id"])
+        if not teacher:
+            return {"classes": []}
+            
+        teacher_id = teacher["teacher_id"]
+
         rows = await conn.fetch("""
             SELECT 
                 c.class_id,
@@ -49,8 +57,10 @@ async def get_teacher_classes():
                 (SELECT COUNT(*) FROM rms.resourcetarget rt WHERE rt.class_id = c.class_id) as resource_count
             FROM rms.class c
             JOIN rms.department d ON c.department_id = d.department_id
+            JOIN rms.teachersubjectclass tsc ON c.class_id = tsc.class_id
+            WHERE tsc.teacher_id = $1
             ORDER BY d.name, c.year, c.semester, c.name
-        """)
+        """, teacher_id)
         
         classes = [dict(row) for row in rows]
         return {"classes": classes}
@@ -59,7 +69,7 @@ async def get_teacher_classes():
 
 # 2. Get class details (header info)
 @router.get("/classes/{class_id}")
-async def get_class_details(class_id: int):
+async def get_class_details(class_id: int, current_user: Annotated[dict, Depends(get_current_teacher)]):
     conn = await get_db_connection()
     try:
         row = await conn.fetchrow("""
@@ -81,7 +91,7 @@ async def get_class_details(class_id: int):
 
 # 3. View previously uploaded resources for that class
 @router.get("/classes/{class_id}/resources")
-async def get_class_resources(class_id: int):
+async def get_class_resources(class_id: int, current_user: Annotated[dict, Depends(get_current_teacher)]):
     conn = await get_db_connection()
     try:
         # We need to join resource -> resourcetarget -> class
@@ -117,7 +127,7 @@ async def get_class_resources(class_id: int):
 
 # 4. Upload a new resource (target to class)
 @router.post("/resources")
-async def create_resource_for_class(resource_data: ResourceCreate):
+async def create_resource_for_class(resource_data: ResourceCreate, current_user: Annotated[dict, Depends(get_current_teacher)]):
     conn = await get_db_connection()
     try:
         async with conn.transaction():
@@ -141,7 +151,7 @@ async def create_resource_for_class(resource_data: ResourceCreate):
                 INSERT INTO rms.resource (file_id, description, uploaded_by, date_uploaded)
                 VALUES ($1, $2, $3, NOW())
                 RETURNING resource_id
-            """, resource_data.file_id, resource_data.description, resource_data.uploaded_by or 1) 
+            """, resource_data.file_id, resource_data.description, current_user["id"]) 
             # Defaulting uploaded_by to 1 just to satisfy FK if exists.
             
             new_res_id = resource_row["resource_id"]
@@ -161,8 +171,9 @@ async def create_resource_for_class(resource_data: ResourceCreate):
         await conn.close()
 
 # 5. Target an existing resource to that class with a new description
+# 5. Target an existing resource to that class with a new description
 @router.post("/resources/link")
-async def link_existing_resource(link_data: ResourceLink):
+async def link_existing_resource(link_data: ResourceLink, current_user: Annotated[dict, Depends(get_current_teacher)]):
     conn = await get_db_connection()
     try:
         async with conn.transaction():
@@ -207,7 +218,7 @@ async def link_existing_resource(link_data: ResourceLink):
 
 # Helper to look up resources for dropdown
 @router.get("/resources/search")
-async def search_resources(query: str = ""):
+async def search_resources(current_user: Annotated[dict, Depends(get_current_teacher)], query: str = ""):
      conn = await get_db_connection()
      try:
         # Simple search by description or file name

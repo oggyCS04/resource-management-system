@@ -2,7 +2,7 @@
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useRouter } from "next/navigation";
 
-export default function TeacherLayout({
+export default function SstudentLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

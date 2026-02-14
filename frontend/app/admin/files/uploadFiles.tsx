@@ -34,6 +34,7 @@ export default function UploadFilesModal({ open, onClose, onSuccess }: UploadFil
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/upload`, {
         method: "POST",
         body: formData,
+        credentials: 'include'
       })
       setFiles([])
       if (fileInputRef.current) {

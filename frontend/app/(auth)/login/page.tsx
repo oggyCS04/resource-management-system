@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -27,16 +28,32 @@ export default function AdminLogin() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/login?username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`,
-        { method: 'POST' }
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        }
       );
       const data = await response.json();
+      
       if (response.ok) {
         setError('');
-        document.cookie = `token=${data.token}; path=/; max-age=86400`;
-        router.replace('/');
+        // Store token in cookie
+        document.cookie = `token=${data.access_token}; path=/; max-age=86400`;
+        
+        // Redirect based on role
+        if (data.role === 'admin') {
+          router.replace('/admin');
+        } else if (data.role === 'Teacher') {
+          router.replace('/teacher');
+        } else if (data.role === 'Student') {
+          router.replace('/student');
+        } else {
+          router.replace('/'); // Fallback
+        }
       } else {
-        setError('Invalid credentials');
+        setError(data.detail || 'Invalid credentials');
       }
     } catch {
       setError('Login failed. Check backend server.');
@@ -53,17 +70,22 @@ export default function AdminLogin() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
       </div>
 
+      {/* Theme toggle */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
+        <ThemeToggle />
+      </div>
+
       <div className="relative w-full max-w-105 mx-4 sm:mx-auto">
         {/* Brand */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-primary mx-auto mb-5 flex items-center justify-center shadow-lg shadow-primary/20">
+          {/* <div className="w-14 h-14 rounded-2xl bg-primary mx-auto mb-5 flex items-center justify-center shadow-lg shadow-primary/20">
             <span className="text-primary-foreground text-xl font-bold">C</span>
-          </div>
+          </div> */}
           <h1 className="text-xl sm:text-2xl font-semibold text-foreground tracking-tight">
-            College RMS
+            Resource Management System
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5">
-            Sign in to your admin account
+            Sign in to your account
           </p>
         </div>
 
@@ -88,7 +110,7 @@ export default function AdminLogin() {
             <input
               type="email"
               className="w-full h-11 px-4 border border-input rounded-xl bg-background text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-              placeholder="admin@college.edu"
+              placeholder="abc@gmail.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -145,7 +167,7 @@ export default function AdminLogin() {
         </form>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © 2024 College Resource Management System
+          © 2026 Resource Management System
         </p>
       </div>
     </div>

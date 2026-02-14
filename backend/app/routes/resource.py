@@ -7,8 +7,54 @@ router = APIRouter(prefix="/resources", tags=["Resources"])
 
 
 # ---------- DB CONNECTION ----------
+# ---------- DB CONNECTION ----------
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)
+
+from app.core.security import get_current_student
+from typing import Annotated
+from fastapi import Depends
+
+#--------- FETCH Student Resources ----------
+@router.get("/student")
+async def get_student_resources(current_user: Annotated[dict, Depends(get_current_student)]):
+    conn = await get_db_connection()
+    try:
+        # 1. Get student's class_id
+        student = await conn.fetchrow("SELECT class_id, campus_rollno FROM rms.students WHERE user_id = $1", current_user["id"])
+        if not student:
+             raise HTTPException(status_code=404, detail="Student record not found")
+        
+        class_id = student["class_id"]
+
+        # 2. Get resources for this class
+        rows = await conn.fetch("""
+            SELECT 
+                r.resource_id,
+                r.description,
+                r.date_uploaded,
+                f.file_name,
+                f.file_type,
+                u.full_name as uploaded_by_name
+            FROM rms.resourcetarget rt
+            JOIN rms.resource r ON rt.resource_id = r.resource_id
+            JOIN rms.file f ON r.file_id = f.file_id
+            LEFT JOIN rms.users u ON r.uploaded_by = u.id
+            WHERE rt.class_id = $1
+            ORDER BY r.date_uploaded DESC
+        """, class_id)
+        
+        resources = []
+        for row in rows:
+            res_dict = dict(row)
+            if res_dict["date_uploaded"]:
+                res_dict["date_uploaded"] = res_dict["date_uploaded"].isoformat()
+            resources.append(res_dict)
+            
+        return {"resources": resources, "student_info": dict(student)}
+        
+    finally:
+        await conn.close()
 
 
 #--------- UPLOAD RESOURCE ----------

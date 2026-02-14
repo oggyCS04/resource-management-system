@@ -18,7 +18,7 @@ export default function TeacherDashboard() {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes`)
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes`, { credentials: 'include' })
                 const data = await res.json()
                 setClasses(data.classes || [])
             } catch (error) {

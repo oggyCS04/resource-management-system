@@ -20,7 +20,7 @@ export default function StudentsPage() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/students`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/students`, { credentials: 'include' })
         const data = await res.json()
         setStudents(data.students || [])
       } catch (err) {
@@ -91,8 +91,8 @@ export default function StudentsPage() {
                       <td className="px-5 py-3.5 text-sm text-center text-foreground">{s.part}</td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${s.is_active
-                            ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                            : "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300"
+                          ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                          : "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300"
                           }`}>
                           <span className={`w-1.5 h-1.5 rounded-full ${s.is_active ? "bg-emerald-500" : "bg-red-500"}`} />
                           {s.is_active ? "Active" : "Inactive"}
@@ -115,8 +115,8 @@ export default function StudentsPage() {
                     <p className="text-xs text-muted-foreground font-mono">{s.campus_rollno}</p>
                   </div>
                   <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${s.is_active
-                      ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
-                      : "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300"
+                    ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                    : "bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300"
                     }`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${s.is_active ? "bg-emerald-500" : "bg-red-500"}`} />
                     {s.is_active ? "Active" : "Inactive"}

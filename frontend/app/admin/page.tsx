@@ -8,18 +8,18 @@ export default function Home() {
 
 
   const [stats, setStats] = useState({
-      students: 0,
-      teachers: 0,
-      departments: 0,
-      classes: 0,
-      resources: 0,
-    });
+    students: 0,
+    teachers: 0,
+    departments: 0,
+    classes: 0,
+    resources: 0,
+  });
 
   const fetchStats = async () => {
     setLoading(true);
     try {
       // Single endpoint using JOINs to get all counts
-      const res = await fetch(`${API_URL}/users/dashboard-stats`);
+      const res = await fetch(`${API_URL}/users/dashboard-stats`, { credentials: 'include' });
       const data = await res.json();
 
       setStats({
@@ -40,7 +40,7 @@ export default function Home() {
     fetchStats();
   }, []);
 
-   
+
 
   const statCards = [
     { label: 'Total Students', value: stats.students, icon: '🎓', color: '#f59e0b' },
@@ -86,10 +86,10 @@ export default function Home() {
         <h2 className="text-lg font-semibold text-foreground mb-4">Quick Actions</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {[
-            { label: "Add Student", href: "/users", icon: "➕" },
-            { label: "Add Teacher", href: "/users", icon: "➕" },
-            { label: "View Resources", href: "/resources", icon: "📖" },
-            { label: "Departments", href: "/departments", icon: "🏢" },
+            { label: "Add Student", href: "/admin/users", icon: "➕" },
+            { label: "Add Teacher", href: "/admin/users", icon: "➕" },
+            { label: "View Resources", href: "/admin/resources", icon: "📖" },
+            { label: "Departments", href: "/admin/departments", icon: "🏢" },
           ].map((action) => (
             <a
               key={action.label}

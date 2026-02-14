@@ -47,8 +47,8 @@ export default function ClassResourcesPage() {
         try {
             setIsLoading(true)
             const [classRes, resRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}`),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}/resources`)
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}`, {credentials: "include"}),
+                fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}/resources`, {credentials: "include"})
             ])
 
             if (classRes.ok) {
@@ -91,7 +91,7 @@ export default function ClassResourcesPage() {
             const formData = new FormData()
             formData.append("file", selectedFile)
 
-            const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/upload`, {
+            const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/upload`, {credentials: "include",
                 method: "POST",
                 body: formData
             })
@@ -103,6 +103,7 @@ export default function ClassResourcesPage() {
 
             // 2. Create Resource linked to class
             const resourceRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources`, {
+                credentials: "include",
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

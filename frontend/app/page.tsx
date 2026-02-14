@@ -1,13 +1,15 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { getUserFromToken } from '@/lib/auth'
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function HomePage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+  const user = await getUserFromToken()
 
   const getDashboardPath = () => {
-    if (token) return "/admin";
-
+    if (user?.role === "admin") return "/admin";
+    if (user?.role === "Teacher") return "/teacher";
+    if (user?.role === "Student") return "/student";
     return "/login";
   };
 
@@ -18,13 +20,15 @@ export default async function HomePage() {
         <h1 className="text-xl font-semibold tracking-tight">
           Resource Management System
         </h1>
-
-        <Link
-          href={getDashboardPath()}
-          className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:opacity-90 transition"
-        >
-            {token ? "Go to Dashboard" : "Login"}
-        </Link>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Link
+            href={getDashboardPath()}
+            className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium shadow-sm hover:opacity-90 transition"
+          >
+            {user ? "Go to Dashboard" : "Login"}
+          </Link>
+        </div>
       </header>
 
       {/* Hero Section */}
