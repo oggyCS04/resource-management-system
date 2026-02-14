@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 
 type Resource = {
   resource_id: number
@@ -21,7 +22,7 @@ export default function ResourcesPage() {
   useEffect(() => {
     const fetchResources = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resources/`, { credentials: 'include' })
+        const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/resources/`)
         const data = await res.json()
         setResources(data.resources || [])
       } catch (error) {
@@ -37,9 +38,8 @@ export default function ResourcesPage() {
   const handleDelete = async (resourceId: number) => {
     if (confirm("Are you sure you want to delete this resource?")) {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/resources/${resourceId}`, {
+        const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/resources/${resourceId}`, {
           method: "DELETE",
-          credentials: 'include'
         })
         if (res.ok) {
           setResources(resources.filter(r => r.resource_id !== resourceId))

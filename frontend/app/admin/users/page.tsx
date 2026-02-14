@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 import AddTeacherModal from "./addTeacherModal"
 import AddStudentModal from "./addStudentModal"
 
@@ -21,7 +22,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/`, { credentials: 'include' })
+      const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/`)
       const data = await res.json()
       setUsers(data.users)
     } catch (err) {
@@ -42,7 +43,7 @@ export default function UsersPage() {
 
   const handleEdit = async (user: User) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, { credentials: 'include' })
+      const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`)
       if (!res.ok) throw new Error("Failed to fetch user details")
       const detailedUser = await res.json()
 
@@ -60,7 +61,7 @@ export default function UsersPage() {
 
   const handleDelete = (userId: number) => {
     if (confirm("Are you sure you want to delete this user?")) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
+      authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}`, {
         method: "DELETE",
       })
         .then((res) => res.json())

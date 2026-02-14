@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { authenticatedFetch } from "@/lib/api-client"
 
 type Resource = {
     resource_id: number
@@ -47,8 +48,8 @@ export default function ClassResourcesPage() {
         try {
             setIsLoading(true)
             const [classRes, resRes] = await Promise.all([
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}`, {credentials: "include"}),
-                fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}/resources`, {credentials: "include"})
+                authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}`),
+                authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}/resources`)
             ])
 
             if (classRes.ok) {
@@ -91,7 +92,7 @@ export default function ClassResourcesPage() {
             const formData = new FormData()
             formData.append("file", selectedFile)
 
-            const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/upload`, {credentials: "include",
+            const uploadRes = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/files/upload`, {
                 method: "POST",
                 body: formData
             })
@@ -102,8 +103,7 @@ export default function ClassResourcesPage() {
             const fileId = uploadData.file_id
 
             // 2. Create Resource linked to class
-            const resourceRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources`, {
-                credentials: "include",
+            const resourceRes = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -135,7 +135,7 @@ export default function ClassResourcesPage() {
             if (linkSearchQuery.length > 2) {
                 setIsSearching(true)
                 try {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources/search?query=${linkSearchQuery}`)
+                    const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources/search?query=${linkSearchQuery}`)
                     const data = await res.json()
                     setSearchResults(data.resources || [])
                 } catch (err) {
@@ -157,7 +157,7 @@ export default function ClassResourcesPage() {
 
         setIsSubmitting(true)
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources/link`, {
+            const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources/link`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -184,7 +184,7 @@ export default function ClassResourcesPage() {
 
     const handleDownload = async (fileId: number) => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/${fileId}`)
+            const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/files/${fileId}`)
             const data = await res.json()
             if (data.download_url) {
                 window.open(data.download_url, "_blank")

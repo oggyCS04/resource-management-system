@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 
 interface UploadFilesModalProps {
   open: boolean
@@ -31,10 +32,9 @@ export default function UploadFilesModal({ open, onClose, onSuccess }: UploadFil
         formData.append("file", file)
       })
 
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/upload`, {
+      await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/files/upload`, {
         method: "POST",
         body: formData,
-        credentials: 'include'
       })
       setFiles([])
       if (fileInputRef.current) {

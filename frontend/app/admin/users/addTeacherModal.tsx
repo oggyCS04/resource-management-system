@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 
 export default function AddTeacherModal({ open, onClose, onSuccess, initialData }: any) {
   const [isLoading, setIsLoading] = useState(false)
@@ -24,11 +25,10 @@ export default function AddTeacherModal({ open, onClose, onSuccess, initialData 
     const method = initialData ? "PATCH" : "POST"
 
     try {
-      await fetch(url, {
+      await authenticatedFetch(url, {
         method: method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
-        credentials: 'include'
       })
       onSuccess()
       onClose()

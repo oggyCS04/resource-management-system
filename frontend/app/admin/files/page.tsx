@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 import UploadFiles from "./uploadFiles"
 
 type File = {
@@ -20,7 +21,7 @@ export default function FilesPage() {
 
     const fetchFiles = async () => {
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/`, { credentials: 'include' })
+            const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/files/`)
             const data = await res.json()
             setFiles(data.files || [])
         } catch (error) {
@@ -50,9 +51,8 @@ export default function FilesPage() {
 
     const handleDelete = (fileId: number) => {
         if (confirm("Are you sure you want to delete this file?")) {
-            fetch(`${process.env.NEXT_PUBLIC_API_URL}/files/${fileId}`, {
+            authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/files/${fileId}`, {
                 method: "DELETE",
-                credentials: 'include'
             })
                 .then((res) => res.json())
                 .then(() => fetchFiles())

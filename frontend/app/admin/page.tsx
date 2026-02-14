@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from 'react';
+import { authenticatedFetch } from '@/lib/api-client';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -19,7 +20,7 @@ export default function Home() {
     setLoading(true);
     try {
       // Single endpoint using JOINs to get all counts
-      const res = await fetch(`${API_URL}/users/dashboard-stats`, { credentials: 'include' });
+      const res = await authenticatedFetch(`${API_URL}/users/dashboard-stats`);
       const data = await res.json();
 
       setStats({

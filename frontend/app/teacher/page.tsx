@@ -1,6 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 
 type ClassItem = {
     class_id: number
@@ -18,7 +19,7 @@ export default function TeacherDashboard() {
     useEffect(() => {
         const fetchClasses = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes`, { credentials: 'include' })
+                const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes`)
                 const data = await res.json()
                 setClasses(data.classes || [])
             } catch (error) {

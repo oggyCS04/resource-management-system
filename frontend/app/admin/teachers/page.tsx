@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 
 type Teacher = {
   teacher_id: number
@@ -26,7 +27,7 @@ export default function TeachersPage() {
   useEffect(() => {
     const fetchTeachers = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/teachers`, { credentials: 'include' })
+        const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/teachers`)
         const data = await res.json()
         setTeachers(data.teachers || [])
       } catch (err) {

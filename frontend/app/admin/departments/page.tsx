@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 
 type Departments = {
   department_id: number
@@ -16,7 +17,7 @@ export default function DepartmentsPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/departments/`, { credentials: 'include' })
+        const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/departments/`)
         const data = await res.json()
         setDepartments(data.departments || [])
       } catch (error) {

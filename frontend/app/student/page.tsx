@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { authenticatedFetch } from "@/lib/api-client"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -26,7 +27,7 @@ export default function StudentDashboard() {
     useEffect(() => {
         const fetchResources = async () => {
             try {
-                const res = await fetch(`${API_URL}/resources/student`, { credentials: 'include' })
+                const res = await authenticatedFetch(`${API_URL}/resources/student`)
                 if (!res.ok) {
                     throw new Error("Failed to fetch resources")
                 }
