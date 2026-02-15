@@ -54,10 +54,10 @@ export default function ResourcesPage() {
   }
 
   const filteredResources = resources.filter(r => {
-    const matchesType = filterType === "All Types" || r.type === filterType
-    const matchesSearch = r.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesType && matchesSearch
+  const matchesType = filterType === "All Types" || r.type === filterType
+  const matchesSearch = r.description.toLowerCase().includes(searchQuery.toLowerCase())
+  //  only search in description, not uploaded_by
+  return matchesType && matchesSearch
   })
 
   const resourceTypes = ["All Types", ...new Set(resources.map(r => r.type))]

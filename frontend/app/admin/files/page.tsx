@@ -7,7 +7,6 @@ type File = {
     file_id: number,
     file_name: string,
     file_type: string,
-    uploaded_by: string,
     uploaded_at: string,
 }
 
@@ -38,15 +37,22 @@ export default function FilesPage() {
 
     const filteredFiles = files.filter(f => {
         const matchesType = filterType === "All Types" || f.file_type === filterType
-        const matchesSearch = f.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            f.uploaded_by.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesSearch = f.file_name.toLowerCase().includes(searchQuery.toLowerCase())
         return matchesType && matchesSearch
     })
 
     const fileTypes = ["All Types", ...new Set(files.map(f => f.file_type))]
 
-    const handleEdit = () => {
-        alert("Edit user functionality to be implemented")
+    const handleView = async (fileId: number, fileName: string) => {
+        try {
+            const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/files/${fileId}/view`)
+            const data = await res.json()
+            
+            window.open(data.view_url, '_blank')
+        } catch (error) {
+            console.error("Failed to get view URL:", error)
+            alert("Failed to view file")
+        }
     }
 
     const handleDelete = (fileId: number) => {
@@ -114,9 +120,8 @@ export default function FilesPage() {
                                         <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">ID</th>
                                         <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">File Name</th>
                                         <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Uploaded By</th>
                                         <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
-                                        <th className="px-5 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
+                                        <th className="px-5 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">
@@ -129,12 +134,21 @@ export default function FilesPage() {
                                                     {r.file_type}
                                                 </span>
                                             </td>
-                                            <td className="px-5 py-3.5 text-sm text-muted-foreground">{r.uploaded_by}</td>
                                             <td className="px-5 py-3.5 text-sm text-muted-foreground">{r.uploaded_at}</td>
                                             <td className="px-5 py-3.5 text-center">
                                                 <div className="flex gap-1.5 justify-center">
-                                                    <button onClick={handleEdit} className="h-8 px-3 text-xs font-medium text-foreground bg-muted rounded-lg hover:bg-accent transition-colors">View</button>
-                                                    <button onClick={() => handleDelete(r.file_id)} className="h-8 px-3 text-xs font-medium text-destructive bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors">Delete</button>
+                                                    <button 
+                                                        onClick={() => handleView(r.file_id, r.file_name)} 
+                                                        className="h-8 px-3 text-xs font-medium text-foreground bg-muted rounded-lg hover:bg-accent transition-colors"
+                                                    >
+                                                        View
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDelete(r.file_id)} 
+                                                        className="h-8 px-3 text-xs font-medium text-destructive bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -155,12 +169,21 @@ export default function FilesPage() {
                                     </span>
                                 </div>
                                 <div className="flex gap-4 text-xs text-muted-foreground pt-2 border-t border-border">
-                                    <span>By: <strong className="text-foreground">{r.uploaded_by}</strong></span>
                                     <span>{r.uploaded_at}</span>
                                 </div>
                                 <div className="flex gap-1.5">
-                                    <button onClick={() => handleEdit} className="h-8 px-3 text-xs font-medium text-foreground bg-muted rounded-lg hover:bg-accent transition-colors">Edit</button>
-                                    <button onClick={() => handleDelete(r.file_id)} className="h-8 px-3 text-xs font-medium text-destructive bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors">Delete</button>
+                                    <button 
+                                        onClick={() => handleView(r.file_id, r.file_name)} 
+                                        className="h-8 px-3 text-xs font-medium text-foreground bg-muted rounded-lg hover:bg-accent transition-colors"
+                                    >
+                                        View
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDelete(r.file_id)} 
+                                        className="h-8 px-3 text-xs font-medium text-destructive bg-destructive/10 rounded-lg hover:bg-destructive/20 transition-colors"
+                                    >
+                                        Delete
+                                    </button>
                                 </div>
                             </div>
                         ))}

@@ -83,6 +83,42 @@ async def get_all_files():
     finally:
         await conn.close()
 
+# ---------- VIEW FILE (FOR VIEWING IN BROWSER) ----------
+@router.get("/{file_id}/view")
+async def view_file(file_id: int):
+    conn = await get_db_connection()
+
+    try:
+        #Get file path from DB
+        record = await conn.fetchrow("""
+            SELECT file_path, file_name, file_type FROM rms.file WHERE file_id = $1
+        """, file_id)
+
+        if not record:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        file_path = record["file_path"]
+        file_name = record["file_name"]
+        file_type = record["file_type"]
+
+        # 2️⃣ Create signed URL (valid for 3600 seconds = 1 hour)
+        signed_url_response = supabase.storage.from_(BUCKET_NAME).create_signed_url(
+            file_path,
+            3600  # 1 hour expiry for viewing
+        )
+
+        if not signed_url_response.get("signedURL"):
+            raise HTTPException(status_code=500, detail="Failed to generate view URL")
+
+        # 3️⃣ Return the signed URL for inline viewing
+        return {
+            "view_url": signed_url_response["signedURL"],
+            "file_name": file_name,
+            "file_type": file_type
+        }
+
+    finally:
+        await conn.close()
 
 # ---------- GET SIGNED URL ----------
 @router.get("/{file_id}")
