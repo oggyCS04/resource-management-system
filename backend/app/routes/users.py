@@ -262,85 +262,68 @@ async def get_user(user_id: int):
 
     finally:
         await conn.close()
-
-
-# ---------- UPDATE USER ----------
+# Update User 
 @router.patch("/{user_id}")
 async def update_user(user_id: int, user_update: UserUpdate):
     conn = await get_db_connection()
     try:
         async with conn.transaction():
-            # 1. Update basic user info
-            update_query = "UPDATE rms.users SET "
-            update_params = []
-            param_idx = 1
-            updates = []
-
-            if user_update.full_name is not None:
-                updates.append(f"full_name = ${param_idx}")
-                update_params.append(user_update.full_name)
-                param_idx += 1
-            
-            if user_update.email is not None:
-                updates.append(f"email = ${param_idx}")
-                update_params.append(user_update.email)
-                param_idx += 1
-            
-            if user_update.is_active is not None:
-                updates.append(f"is_active = ${param_idx}")
-                update_params.append(user_update.is_active)
-                param_idx += 1
-
+            # Hash password if provided
+            hashed_password = None
             if user_update.password:
                 hashed_password = bcrypt.hashpw(
                     user_update.password.encode("utf-8"),
                     bcrypt.gensalt()
                 ).decode("utf-8")
-                updates.append(f"password = ${param_idx}")
-                update_params.append(hashed_password)
-                param_idx += 1
 
-            if updates:
-                update_query += ", ".join(updates) + f" WHERE id = ${param_idx}"
-                update_params.append(user_id)
-                await conn.execute(update_query, *update_params)
+            #  Update users table using COALESCE 
+            await conn.execute("""
+                UPDATE rms.users 
+                SET 
+                    full_name = COALESCE($1, full_name),
+                    email = COALESCE($2, email),
+                    is_active = COALESCE($3, is_active),
+                    password = COALESCE($4, password)
+                WHERE id = $5
+            """, 
+                user_update.full_name,
+                user_update.email,
+                user_update.is_active,
+                hashed_password,
+                user_id
+            )
 
-            # 2. Get user role to update specific tables
-            role_row = await conn.fetchrow("SELECT role_id FROM rms.users WHERE id = $1", user_id)
-            if not role_row:
-                raise HTTPException(status_code=404, detail="User not found")
-            
-            role_id = role_row["role_id"]
+            #  Update student table
+            await conn.execute("""
+                UPDATE rms.students
+                SET 
+                    class_id = COALESCE($1, class_id),
+                    campus_rollno = COALESCE($2, campus_rollno)
+                WHERE user_id = $3
+                AND EXISTS (
+                    SELECT 1 FROM rms.users 
+                    WHERE id = $3 AND role_id = 2
+                )
+            """,
+                user_update.class_id,
+                user_update.campus_rollno,
+                user_id
+            )
 
-            # Update Student details
-            if role_id == 2:
-                student_updates = []
-                student_params = []
-                s_idx = 1
-
-                if user_update.class_id is not None:
-                    student_updates.append(f"class_id = ${s_idx}")
-                    student_params.append(user_update.class_id)
-                    s_idx += 1
-                
-                if user_update.campus_rollno is not None:
-                    student_updates.append(f"campus_rollno = ${s_idx}")
-                    student_params.append(user_update.campus_rollno)
-                    s_idx += 1
-                
-                if student_updates:
-                    s_query = "UPDATE rms.students SET " + ", ".join(student_updates) + f" WHERE user_id = ${s_idx}"
-                    student_params.append(user_id)
-                    await conn.execute(s_query, *student_params)
-
-            # Update Teacher details
-            elif role_id == 1:
-                if user_update.department_id is not None:
-                    await conn.execute(
-                        "UPDATE rms.teachers SET department_id = $1 WHERE user_id = $2",
-                        user_update.department_id,
-                        user_id
-                    )
+            #  Update teacher table 
+            await conn.execute("""
+                UPDATE rms.teachers
+                SET 
+                    department_id = COALESCE($1, department_id)
+                WHERE user_id = $2
+                AND EXISTS (
+                    SELECT 1 FROM rms.users 
+                    WHERE id = $2 AND role_id = 1
+                )
+            """,
+                user_update.department_id,
+                user_id
+            )
 
         return {"message": "User updated successfully"}
 

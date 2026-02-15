@@ -53,4 +53,30 @@ SELECT
                 ORDER BY
                 r.date_uploaded DESC;
 
+--JOIN FOR DASHBOARD
 
+ SELECT
+                s.total_students,
+                t.total_teachers,
+                d.total_departments,
+                c.total_classes,
+                r.total_resources
+            FROM
+                (SELECT COUNT(*) AS total_students
+                 FROM rms.students st
+                 JOIN rms.users u ON st.user_id = u.id
+                 WHERE u.is_active = true) s,
+
+                (SELECT COUNT(*) AS total_teachers
+                 FROM rms.teachers tc
+                 JOIN rms.users u ON tc.user_id = u.id
+                 WHERE u.is_active = true) t,
+
+                (SELECT COUNT(*) AS total_departments
+                 FROM rms.department) d,
+
+                (SELECT COUNT(*) AS total_classes
+                 FROM rms.class) c,
+
+                (SELECT COUNT(*) AS total_resources
+                 FROM rms.resource) r
