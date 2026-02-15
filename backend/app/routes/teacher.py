@@ -94,8 +94,7 @@ async def get_class_details(class_id: int, current_user: Annotated[dict, Depends
 async def get_class_resources(class_id: int, current_user: Annotated[dict, Depends(get_current_teacher)]):
     conn = await get_db_connection()
     try:
-        # We need to join resource -> resourcetarget -> class
-        # And also fetch file info
+        # ✅ Only show resources uploaded by the current teacher
         rows = await conn.fetch("""
             SELECT 
                 r.resource_id,
@@ -109,14 +108,14 @@ async def get_class_resources(class_id: int, current_user: Annotated[dict, Depen
             JOIN rms.resource r ON rt.resource_id = r.resource_id
             JOIN rms.file f ON r.file_id = f.file_id
             LEFT JOIN rms.users u ON r.uploaded_by = u.id
-            WHERE rt.class_id = $1
+            WHERE rt.class_id = $1 
+            AND r.uploaded_by = $2  -- ✅ Filter by current teacher's user_id
             ORDER BY r.date_uploaded DESC
-        """, class_id)
-        
+        """, class_id, current_user["id"])  
+               
         resources = []
         for row in rows:
             res_dict = dict(row)
-            # Serialize date
             if res_dict["date_uploaded"]:
                 res_dict["date_uploaded"] = res_dict["date_uploaded"].isoformat()
             resources.append(res_dict)
