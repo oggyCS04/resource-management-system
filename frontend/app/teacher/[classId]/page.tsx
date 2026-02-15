@@ -5,6 +5,8 @@ import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { authenticatedFetch } from "@/lib/api-client"
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // ✅ 50 MB in bytes
+
 type Resource = {
     resource_id: number
     description: string
@@ -35,6 +37,7 @@ export default function ClassResourcesPage() {
     const [description, setDescription] = useState("")
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [uploadError, setUploadError] = useState("") // ✅ Add error state
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Link Form State
@@ -77,16 +80,38 @@ export default function ClassResourcesPage() {
 
     // --- Upload Logic ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setSelectedFile(e.target.files[0])
+        const file = e.target.files?.[0]
+        
+        if (!file) return
+
+        // ✅ Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+            setUploadError(`File size must be less than 50 MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)} MB`)
+            setSelectedFile(null)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""
+            }
+            return
         }
+
+        // ✅ Clear error and set file
+        setUploadError("")
+        setSelectedFile(file)
     }
 
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!selectedFile || !description) return
 
+        // ✅ Double-check file size before upload
+        if (selectedFile.size > MAX_FILE_SIZE) {
+            setUploadError("File size exceeds 50 MB limit")
+            return
+        }
+
         setIsSubmitting(true)
+        setUploadError("") // ✅ Clear any previous errors
+
         try {
             // 1. Upload File
             const formData = new FormData()
@@ -120,10 +145,14 @@ export default function ClassResourcesPage() {
             setIsModalOpen(false)
             setDescription("")
             setSelectedFile(null)
+            setUploadError("")
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""
+            }
             fetchData()
 
-        } catch (error) {
-            alert("Error uploading resource: " + error)
+        } catch (error: any) {
+            setUploadError(error.message || "Error uploading resource")
         } finally {
             setIsSubmitting(false)
         }
@@ -175,8 +204,8 @@ export default function ClassResourcesPage() {
             setSelectedResourceId(null)
             fetchData()
 
-        } catch (error) {
-            alert("Error linking resource: " + error)
+        } catch (error: any) {
+            alert("Error linking resource: " + error.message)
         } finally {
             setIsSubmitting(false)
         }
@@ -193,6 +222,22 @@ export default function ClassResourcesPage() {
             }
         } catch (e) {
             alert("Error downloading file")
+        }
+    }
+
+    // ✅ Close modal handler
+    const handleCloseModal = () => {
+        if (!isSubmitting) {
+            setIsModalOpen(false)
+            setDescription("")
+            setSelectedFile(null)
+            setUploadError("")
+            setLinkDescription("")
+            setLinkSearchQuery("")
+            setSelectedResourceId(null)
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ""
+            }
         }
     }
 
@@ -299,6 +344,14 @@ export default function ClassResourcesPage() {
                             <div className="p-6">
                                 {activeTab === 'upload' ? (
                                     <form onSubmit={handleUpload} className="space-y-4">
+                                        {/* ✅ Error Message */}
+                                        {uploadError && (
+                                            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg flex items-start gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                                                <span>{uploadError}</span>
+                                            </div>
+                                        )}
+
                                         <div>
                                             <label className="block text-sm font-medium mb-1.5">Description</label>
                                             <input
@@ -311,19 +364,28 @@ export default function ClassResourcesPage() {
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium mb-1.5">File</label>
+                                            <label className="block text-sm font-medium mb-1.5">
+                                                File <span className="text-xs text-muted-foreground">(Max 50 MB)</span>
+                                            </label>
                                             <input
+                                                ref={fileInputRef}
                                                 type="file"
                                                 onChange={handleFileChange}
                                                 className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                                                 required
                                             />
+                                            {selectedFile && (
+                                                <p className="text-xs text-muted-foreground mt-1">
+                                                    Selected: {selectedFile.name} ({(selectedFile.size / (1024 * 1024)).toFixed(2)} MB)
+                                                </p>
+                                            )}
                                         </div>
                                         <div className="pt-4 flex gap-3 justify-end">
                                             <button
                                                 type="button"
-                                                onClick={() => setIsModalOpen(false)}
-                                                className="h-10 px-4 rounded-xl border border-border hover:bg-muted transition-colors text-sm font-medium"
+                                                onClick={handleCloseModal}
+                                                disabled={isSubmitting}
+                                                className="h-10 px-4 rounded-xl border border-border hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50"
                                             >
                                                 Cancel
                                             </button>
@@ -381,8 +443,9 @@ export default function ClassResourcesPage() {
                                         <div className="pt-4 flex gap-3 justify-end">
                                             <button
                                                 type="button"
-                                                onClick={() => setIsModalOpen(false)}
-                                                className="h-10 px-4 rounded-xl border border-border hover:bg-muted transition-colors text-sm font-medium"
+                                                onClick={handleCloseModal}
+                                                disabled={isSubmitting}
+                                                className="h-10 px-4 rounded-xl border border-border hover:bg-muted transition-colors text-sm font-medium disabled:opacity-50"
                                             >
                                                 Cancel
                                             </button>
