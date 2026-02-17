@@ -4,7 +4,7 @@ from datetime import datetime
 import asyncpg
 from app.core.database import DATABASE_URL
 from app.core.storage import supabase, BUCKET_NAME
-from core.security import get_current_admin_or_teacher
+from app.core.security import get_current_admin_or_teacher
 
 router = APIRouter(prefix="/files", tags=["Files"], dependencies=[Depends(get_current_admin_or_teacher)])
 
