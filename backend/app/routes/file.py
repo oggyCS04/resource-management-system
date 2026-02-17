@@ -1,11 +1,12 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 import uuid
 from datetime import datetime
 import asyncpg
 from app.core.database import DATABASE_URL
 from app.core.storage import supabase, BUCKET_NAME
+from core.security import get_current_admin_or_teacher
 
-router = APIRouter(prefix="/files", tags=["Files"])
+router = APIRouter(prefix="/files", tags=["Files"], dependencies=[Depends(get_current_admin_or_teacher)])
 
 async def get_db_connection():
     return await asyncpg.connect(DATABASE_URL)

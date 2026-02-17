@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 import asyncpg
 import bcrypt
 from app.core.database import DATABASE_URL
 from app.schemas.user import UserCreate
 from datetime import date, datetime
 
+from app.core.security import get_current_admin
 
-router = APIRouter(prefix="/departments", tags=["Departments"])
+
+router = APIRouter(prefix="/departments", tags=["Departments"], dependencies=[Depends(get_current_admin)])
 
 
 # ---------- DB CONNECTION ----------

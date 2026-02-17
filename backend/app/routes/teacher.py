@@ -169,7 +169,7 @@ async def create_resource_for_class(resource_data: ResourceCreate, current_user:
     finally:
         await conn.close()
 
-# 5. Target an existing resource to that class with a new description
+
 # 5. Target an existing resource to that class with a new description
 @router.post("/resources/link")
 async def link_existing_resource(link_data: ResourceLink, current_user: Annotated[dict, Depends(get_current_teacher)]):

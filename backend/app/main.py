@@ -41,7 +41,7 @@ def root():
 
 @app.get("/health")
 def health_check():
-    """Health check endpoint for monitoring"""
+    
     return {
         "status": "healthy",
         "api": "Resource Management System",

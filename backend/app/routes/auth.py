@@ -44,9 +44,7 @@ async def login(login_data: LoginRequest):
 
         if user:
             if verify_password(login_data.password, user['password']):
-                # Determine role string based on role_name
-                # Assuming roles table has 'name' as 'teacher', 'student' etc.
-                # Adjust map based on actual DB values if known, safe default is lowercase
+                
                 role = user['role_name'] 
                 
                 access_token = create_access_token(
