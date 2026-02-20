@@ -80,7 +80,7 @@ async def get_current_student(current_user: Annotated[dict, Depends(get_current_
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return current_user
 
-async def get_current_admin_or_teacher(current_user: Annotated[dict, Depends(get_current_active_user)]):
-    if current_user["role"].lower() not in ["admin", "teacher"]:
+async def get_current_admin_or_teacher_or_student(current_user: Annotated[dict, Depends(get_current_active_user)]):
+    if current_user["role"].lower() not in ["admin", "teacher", "student"]:
         raise HTTPException(status_code=403, detail="Not enough permissions")
     return current_user

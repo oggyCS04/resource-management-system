@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { authenticatedFetch } from "@/lib/api-client"
 
@@ -22,6 +22,11 @@ type ClassDetails = {
     department_name: string
 }
 
+type CurrentUser = {
+    user_id: number
+    name: string
+}
+
 export default function ClassResourcesPage() {
     const params = useParams()
     const classId = params?.classId as string
@@ -29,6 +34,7 @@ export default function ClassResourcesPage() {
 
     const [resources, setResources] = useState<Resource[]>([])
     const [classDetails, setClassDetails] = useState<ClassDetails | null>(null)
+    const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null) // ✅ Fix: track real user
     const [isLoading, setIsLoading] = useState(true)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState<"upload" | "link">("upload")
@@ -37,22 +43,25 @@ export default function ClassResourcesPage() {
     const [description, setDescription] = useState("")
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [uploadError, setUploadError] = useState("") // ✅ Add error state
+    const [uploadError, setUploadError] = useState("")
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Link Form State
     const [linkSearchQuery, setLinkSearchQuery] = useState("")
-    const [searchResults, setSearchResults] = useState<any[]>([])
+    const [searchResults, setSearchResults] = useState<Resource[]>([]) // ✅ Fix: typed as Resource[]
     const [selectedResourceId, setSelectedResourceId] = useState<number | null>(null)
     const [linkDescription, setLinkDescription] = useState("")
     const [isSearching, setIsSearching] = useState(false)
+    const [linkError, setLinkError] = useState("") // ✅ Fix: proper error state for link form
 
-    const fetchData = async () => {
+    // ✅ Fix: wrapped in useCallback so it's stable and safe to use in useEffect deps
+    const fetchData = useCallback(async () => {
         try {
             setIsLoading(true)
-            const [classRes, resRes] = await Promise.all([
+            const [classRes, resRes, userRes] = await Promise.all([
                 authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}`),
-                authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}/resources`)
+                authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/classes/${classId}/resources`),
+                authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`) // ✅ Fix: fetch current user
             ])
 
             if (classRes.ok) {
@@ -65,26 +74,30 @@ export default function ClassResourcesPage() {
                 setResources(resData.resources || [])
             }
 
+            if (userRes.ok) {
+                const userData = await userRes.json()
+                setCurrentUser(userData)
+            }
+
         } catch (error) {
             console.error("Failed to fetch data:", error)
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [classId]) // ✅ Fix: classId as dependency
 
     useEffect(() => {
         if (classId) {
             fetchData()
         }
-    }, [classId])
+    }, [classId, fetchData]) // ✅ Fix: fetchData included in deps
 
     // --- Upload Logic ---
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
-        
+
         if (!file) return
 
-        // ✅ Validate file size
         if (file.size > MAX_FILE_SIZE) {
             setUploadError(`File size must be less than 50 MB. Your file is ${(file.size / (1024 * 1024)).toFixed(2)} MB`)
             setSelectedFile(null)
@@ -94,7 +107,6 @@ export default function ClassResourcesPage() {
             return
         }
 
-        // ✅ Clear error and set file
         setUploadError("")
         setSelectedFile(file)
     }
@@ -103,17 +115,15 @@ export default function ClassResourcesPage() {
         e.preventDefault()
         if (!selectedFile || !description) return
 
-        // ✅ Double-check file size before upload
         if (selectedFile.size > MAX_FILE_SIZE) {
             setUploadError("File size exceeds 50 MB limit")
             return
         }
 
         setIsSubmitting(true)
-        setUploadError("") // ✅ Clear any previous errors
+        setUploadError("")
 
         try {
-            // 1. Upload File
             const formData = new FormData()
             formData.append("file", selectedFile)
 
@@ -127,7 +137,6 @@ export default function ClassResourcesPage() {
             const uploadData = await uploadRes.json()
             const fileId = uploadData.file_id
 
-            // 2. Create Resource linked to class
             const resourceRes = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -135,13 +144,12 @@ export default function ClassResourcesPage() {
                     file_id: fileId,
                     description: description,
                     class_id: parseInt(classId),
-                    uploaded_by: 1 // Default ID
+                    uploaded_by: currentUser?.user_id ?? null // ✅ Fix: use real user ID
                 })
             })
 
             if (!resourceRes.ok) throw new Error("Resource creation failed")
 
-            // Reset and refresh
             setIsModalOpen(false)
             setDescription("")
             setSelectedFile(null)
@@ -161,12 +169,21 @@ export default function ClassResourcesPage() {
     // --- Link Logic ---
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
-            if (linkSearchQuery.length > 2) {
+            if (linkSearchQuery.length > 1) {
                 setIsSearching(true)
                 try {
                     const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources/search?query=${linkSearchQuery}`)
                     const data = await res.json()
-                    setSearchResults(data.resources || [])
+                    // ✅ Fix: sanitize results so no undefined fields reach controlled inputs
+                    const sanitized: Resource[] = (data.resources || []).map((r: any) => ({
+                        ...r,
+                        description: r.description ?? "",
+                        file_name: r.file_name ?? "",
+                        file_type: r.file_type ?? "",
+                        uploaded_by_name: r.uploaded_by_name ?? null,
+                        date_uploaded: r.date_uploaded ?? "",
+                    }))
+                    setSearchResults(sanitized)
                 } catch (err) {
                     console.error(err)
                 } finally {
@@ -185,6 +202,7 @@ export default function ClassResourcesPage() {
         if (!selectedResourceId) return
 
         setIsSubmitting(true)
+        setLinkError("") // ✅ Fix: clear previous error
         try {
             const res = await authenticatedFetch(`${process.env.NEXT_PUBLIC_API_URL}/teacher/resources/link`, {
                 method: "POST",
@@ -192,7 +210,7 @@ export default function ClassResourcesPage() {
                 body: JSON.stringify({
                     resource_id: selectedResourceId,
                     class_id: parseInt(classId),
-                    description: linkDescription || null // Send null if empty to use original
+                    description: linkDescription || null
                 })
             })
 
@@ -202,10 +220,11 @@ export default function ClassResourcesPage() {
             setLinkDescription("")
             setLinkSearchQuery("")
             setSelectedResourceId(null)
+            setLinkError("")
             fetchData()
 
         } catch (error: any) {
-            alert("Error linking resource: " + error.message)
+            setLinkError(error.message || "Error linking resource") // ✅ Fix: use state instead of alert()
         } finally {
             setIsSubmitting(false)
         }
@@ -225,7 +244,6 @@ export default function ClassResourcesPage() {
         }
     }
 
-    // ✅ Close modal handler
     const handleCloseModal = () => {
         if (!isSubmitting) {
             setIsModalOpen(false)
@@ -235,6 +253,7 @@ export default function ClassResourcesPage() {
             setLinkDescription("")
             setLinkSearchQuery("")
             setSelectedResourceId(null)
+            setLinkError("") // ✅ Fix: clear link error on close
             if (fileInputRef.current) {
                 fileInputRef.current.value = ""
             }
@@ -344,10 +363,9 @@ export default function ClassResourcesPage() {
                             <div className="p-6">
                                 {activeTab === 'upload' ? (
                                     <form onSubmit={handleUpload} className="space-y-4">
-                                        {/* ✅ Error Message */}
                                         {uploadError && (
                                             <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg flex items-start gap-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
                                                 <span>{uploadError}</span>
                                             </div>
                                         )}
@@ -370,9 +388,9 @@ export default function ClassResourcesPage() {
                                             <input
                                                 ref={fileInputRef}
                                                 type="file"
+                                                required
                                                 onChange={handleFileChange}
                                                 className="w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
-                                                required
                                             />
                                             {selectedFile && (
                                                 <p className="text-xs text-muted-foreground mt-1">
@@ -400,6 +418,14 @@ export default function ClassResourcesPage() {
                                     </form>
                                 ) : (
                                     <form onSubmit={handleLink} className="space-y-4">
+                                        {/* ✅ Fix: inline error for link form instead of alert() */}
+                                        {linkError && (
+                                            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg flex items-start gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 shrink-0"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
+                                                <span>{linkError}</span>
+                                            </div>
+                                        )}
+
                                         <div>
                                             <label className="block text-sm font-medium mb-1.5">Search Resource</label>
                                             <input
@@ -413,7 +439,7 @@ export default function ClassResourcesPage() {
 
                                         <div className="max-h-40 overflow-y-auto border border-border rounded-xl bg-muted/20">
                                             {isSearching && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                                            {!isSearching && searchResults.length === 0 && linkSearchQuery.length > 2 && (
+                                            {!isSearching && searchResults.length === 0 && linkSearchQuery.length > 1 && (
                                                 <div className="p-3 text-xs text-muted-foreground">No results found</div>
                                             )}
                                             {searchResults.map(res => (
@@ -432,7 +458,7 @@ export default function ClassResourcesPage() {
                                             <label className="block text-sm font-medium mb-1.5">New Description (Optional)</label>
                                             <input
                                                 type="text"
-                                                value={linkDescription}
+                                                value={linkDescription ?? ""} // ✅ Fix: fallback to prevent undefined
                                                 onChange={e => setLinkDescription(e.target.value)}
                                                 className="w-full h-10 px-3 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
                                                 placeholder="Leave empty to keep original description"

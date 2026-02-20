@@ -3,7 +3,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "College RMS — Resource Management System",
+  title: "College RMS",
   description: "Manage your college resources efficiently",
 };
 
